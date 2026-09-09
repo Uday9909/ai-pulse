@@ -1,0 +1,418 @@
+[
+  {
+    "id": "common-freq",
+    "type": "mcq",
+    "roles": [
+      "all"
+    ],
+    "text": "How often do you use AI tools (ChatGPT, Copilot, Claude, Gemini, etc.) for work?",
+    "options": [
+      {
+        "text": "Never",
+        "points": 1
+      },
+      {
+        "text": "A few times a month",
+        "points": 2
+      },
+      {
+        "text": "A few times a week",
+        "points": 3
+      },
+      {
+        "text": "Daily",
+        "points": 4
+      },
+      {
+        "text": "Many times a day, it's part of how I work",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "common-policy",
+    "type": "mcq",
+    "roles": [
+      "all"
+    ],
+    "text": "Does your company have a policy on which AI tools you may use and what data you can share with them?",
+    "options": [
+      {
+        "text": "I don't know",
+        "points": 1
+      },
+      {
+        "text": "I think so, but I haven't read it",
+        "points": 2
+      },
+      {
+        "text": "Yes, I've read it",
+        "points": 3
+      },
+      {
+        "text": "Yes, and I follow it",
+        "points": 4
+      },
+      {
+        "text": "Yes, and I help others follow it",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "common-data",
+    "type": "mcq",
+    "roles": [
+      "all"
+    ],
+    "text": "Before pasting text into an AI tool, how often do you remove customer or confidential details?",
+    "options": [
+      {
+        "text": "I don't think about it",
+        "points": 1
+      },
+      {
+        "text": "Rarely",
+        "points": 2
+      },
+      {
+        "text": "Sometimes",
+        "points": 3
+      },
+      {
+        "text": "Usually",
+        "points": 4
+      },
+      {
+        "text": "Always, and I know which tools are approved",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "common-review",
+    "type": "mcq",
+    "roles": [
+      "all"
+    ],
+    "text": "When AI gives you an answer you'll use at work, what do you usually do?",
+    "options": [
+      {
+        "text": "Use it as is",
+        "points": 1
+      },
+      {
+        "text": "Skim it",
+        "points": 2
+      },
+      {
+        "text": "Check the parts that look wrong",
+        "points": 3
+      },
+      {
+        "text": "Check facts and edit it",
+        "points": 4
+      },
+      {
+        "text": "Verify it against sources and keep notes on what AI gets wrong",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "common-open",
+    "type": "open",
+    "roles": [
+      "all"
+    ],
+    "text": "Describe a work task where you used AI in the last two weeks. What did you do, and what happened?"
+  },
+  {
+    "id": "sup-drafts",
+    "type": "mcq",
+    "roles": [
+      "support"
+    ],
+    "min_seniority": "junior",
+    "text": "How do you use AI when replying to customers?",
+    "options": [
+      {
+        "text": "I don't",
+        "points": 1
+      },
+      {
+        "text": "To fix grammar",
+        "points": 2
+      },
+      {
+        "text": "To draft replies I then edit",
+        "points": 3
+      },
+      {
+        "text": "To draft replies and summarise ticket history",
+        "points": 4
+      },
+      {
+        "text": "I've built templates/prompts my team reuses",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "sup-escalation",
+    "type": "mcq",
+    "roles": [
+      "support"
+    ],
+    "min_seniority": "senior",
+    "text": "Have you used AI to spot patterns across many tickets (recurring issues, sentiment)?",
+    "options": [
+      {
+        "text": "No",
+        "points": 1
+      },
+      {
+        "text": "Tried once",
+        "points": 2
+      },
+      {
+        "text": "Occasionally",
+        "points": 3
+      },
+      {
+        "text": "Regularly",
+        "points": 4
+      },
+      {
+        "text": "It feeds our weekly reporting",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "eng-assistant",
+    "type": "mcq",
+    "roles": [
+      "engineering"
+    ],
+    "min_seniority": "junior",
+    "text": "How do you use a code assistant?",
+    "options": [
+      {
+        "text": "I don't",
+        "points": 1
+      },
+      {
+        "text": "Autocomplete only",
+        "points": 2
+      },
+      {
+        "text": "To write functions I then review",
+        "points": 3
+      },
+      {
+        "text": "For tests, refactors and debugging",
+        "points": 4
+      },
+      {
+        "text": "Across design, code and review, with clear rules",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "eng-review",
+    "type": "mcq",
+    "roles": [
+      "engineering"
+    ],
+    "min_seniority": "mid",
+    "text": "How do you review AI-written code before it ships?",
+    "options": [
+      {
+        "text": "I don't review it differently",
+        "points": 1
+      },
+      {
+        "text": "Quick look",
+        "points": 2
+      },
+      {
+        "text": "Read every line",
+        "points": 3
+      },
+      {
+        "text": "Read every line and add tests",
+        "points": 4
+      },
+      {
+        "text": "Team has a written review checklist for AI code",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "eng-arch",
+    "type": "mcq",
+    "roles": [
+      "engineering"
+    ],
+    "min_seniority": "senior",
+    "text": "Have you introduced AI into a product feature or internal tool?",
+    "options": [
+      {
+        "text": "No",
+        "points": 1
+      },
+      {
+        "text": "Prototype only",
+        "points": 2
+      },
+      {
+        "text": "One feature in production",
+        "points": 3
+      },
+      {
+        "text": "Several features, monitored",
+        "points": 4
+      },
+      {
+        "text": "I set the standards others follow",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "sales-outreach",
+    "type": "mcq",
+    "roles": [
+      "sales"
+    ],
+    "min_seniority": "junior",
+    "text": "How do you use AI in outreach and follow-ups?",
+    "options": [
+      {
+        "text": "I don't",
+        "points": 1
+      },
+      {
+        "text": "Occasionally for wording",
+        "points": 2
+      },
+      {
+        "text": "Draft emails, then personalise",
+        "points": 3
+      },
+      {
+        "text": "Research accounts and draft sequences",
+        "points": 4
+      },
+      {
+        "text": "Built a repeatable workflow for the team",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "sales-crm",
+    "type": "mcq",
+    "roles": [
+      "sales"
+    ],
+    "min_seniority": "mid",
+    "text": "Do you use AI to summarise calls or update the CRM?",
+    "options": [
+      {
+        "text": "No",
+        "points": 1
+      },
+      {
+        "text": "Tried it",
+        "points": 2
+      },
+      {
+        "text": "Sometimes",
+        "points": 3
+      },
+      {
+        "text": "Most calls",
+        "points": 4
+      },
+      {
+        "text": "Every call, with a checked template",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "mgr-adoption",
+    "type": "mcq",
+    "roles": [
+      "manager"
+    ],
+    "min_seniority": "mid",
+    "text": "How is AI used across your team?",
+    "options": [
+      {
+        "text": "Not at all",
+        "points": 1
+      },
+      {
+        "text": "A few people, informally",
+        "points": 2
+      },
+      {
+        "text": "Most people, informally",
+        "points": 3
+      },
+      {
+        "text": "Agreed use cases",
+        "points": 4
+      },
+      {
+        "text": "Measured use cases with owners",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "mgr-policy",
+    "type": "mcq",
+    "roles": [
+      "manager"
+    ],
+    "min_seniority": "senior",
+    "text": "Have you set rules or training on AI use for your team?",
+    "options": [
+      {
+        "text": "No",
+        "points": 1
+      },
+      {
+        "text": "Informal advice",
+        "points": 2
+      },
+      {
+        "text": "Shared the company policy",
+        "points": 3
+      },
+      {
+        "text": "Ran training",
+        "points": 4
+      },
+      {
+        "text": "Training plus regular review of risks",
+        "points": 5
+      }
+    ]
+  },
+  {
+    "id": "mgr-open",
+    "type": "open",
+    "roles": [
+      "manager"
+    ],
+    "min_seniority": "senior",
+    "text": "Which decision in your area would you trust AI to support, and which would you never hand to it? Why?"
+  }
+]

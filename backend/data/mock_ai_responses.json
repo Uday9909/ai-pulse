@@ -1,0 +1,12 @@
+[
+  "{\"score\": 4, \"reason\": \"Uses AI weekly to draft and then checks replies before sending.\", \"flags\": []}",
+  "{\"score\": 3, \"reason\": \"Regular use for summarising, little evidence of reviewing outputs.\", \"flags\": [\"unreviewed_output\"]}",
+  "{\"score\": 2, \"reason\": \"Tried AI once for an email; no regular use.\", \"flags\": []}",
+  "{\"score\": 5, \"reason\": \"Built a reusable prompt workflow the team now uses, with checks.\", \"flags\": []}",
+  "{\"score\": 3, \"reason\": \"Uses AI for reports but pasted a customer list into a public tool.\", \"flags\": [\"customer_data_shared\"]}",
+  "{\"score\": 7, \"reason\": \"Excellent, very advanced usage.\", \"flags\": []}",
+  "{\"score\": 3, \"flags\": [\"unreviewed_output\"]}",
+  "{\"score\": \"four\", \"reason\": \"Good regular use.\", \"flags\": []}",
+  "{\"score\": 2, \"reason\": \"Limited use.\", \"flags\": [\"probably_lying\", \"made_up_flag\"]}",
+  "```json\n{\"score\": 4, \"reason\": \"Thoughtful use with review.\", \"flags\": []}\n```"
+]

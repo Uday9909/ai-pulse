@@ -1,0 +1,6 @@
+body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7fb; color: #1d2433; }
+.wrap { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+.card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 16px; }
+button { background: #3f2a71; color: #fff; border: 0; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
+input, textarea, select { width: 100%; padding: 8px; margin: 6px 0 14px; box-sizing: border-box; }
+.error { color: #b42318; }

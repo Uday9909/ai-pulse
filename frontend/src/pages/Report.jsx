@@ -23,6 +23,15 @@ export default function Report() {
     <div className="card">
       <h2>{report.name}: {report.level}</h2>
       <p>Average score: {report.average_score}</p>
+      <h3>Your answers</h3>
+      <ul>
+        {report.answers.map((a, i) => (
+          <li key={`${a.question_id}-${i}`}>
+            <b>{a.question_id}</b>: {a.score ?? "not scored"}
+            {a.reason && <span> — {a.reason}</span>}
+          </li>
+        ))}
+      </ul>
       <h3>Risks</h3>
       <ul>{report.risks.map((r) => <li key={r}>{r}</li>)}</ul>
       <h3>Next steps</h3>

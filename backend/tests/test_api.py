@@ -97,6 +97,16 @@ def test_report_and_dashboard_use_the_same_maturity_scale(client):
     assert hr["level"] == report["level"]
 
 
+def test_report_includes_stored_reason_per_answer(client):
+    headers, _ = login(client, "priya@northwind.test", "Northwind Logistics")
+    report = client.get("/reports/me", headers=headers).json()
+
+    by_question = {a["question_id"]: a for a in report["answers"]}
+    assert by_question["common-freq"]["score"] == 2
+    assert by_question["common-open"]["score"] == 3
+    assert by_question["common-open"]["reason"] == "Useful summary but shared customer data."
+
+
 def test_select_org_rejects_non_member(client):
     headers, _ = login(client, "priya@northwind.test")
     r = client.post("/auth/select-org", json={"org_id": 2}, headers=headers)

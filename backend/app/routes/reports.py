@@ -18,7 +18,12 @@ NEXT_STEPS = {
 
 @router.get("/me")
 def my_report(m: models.Membership = Depends(current_membership), db: Session = Depends(get_db)):
-    rows = db.query(models.Response).filter_by(membership_id=m.id).all()
+    rows = (
+        db.query(models.Response)
+        .filter_by(membership_id=m.id)
+        .order_by(models.Response.id)
+        .all()
+    )
     scores = [r.score for r in rows if r.score is not None]
     avg = sum(scores) / len(scores) if scores else None
     flags = sorted({f for r in rows for f in (r.flags or [])})
@@ -30,6 +35,10 @@ def my_report(m: models.Membership = Depends(current_membership), db: Session = 
         "level": maturity_level(avg),
         "risks": flags,
         "next_steps": NEXT_STEPS.get(m.job_role, NEXT_STEPS["manager"]),
+        "answers": [
+            {"question_id": r.question_id, "score": r.score, "reason": r.reason}
+            for r in rows
+        ],
     }
 
 

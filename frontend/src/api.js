@@ -1,4 +1,12 @@
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE = import.meta.env?.VITE_API_URL || "http://localhost:8000";
+
+export class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 export function getToken() {
   return localStorage.getItem("token");
@@ -17,7 +25,14 @@ export async function api(path, options = {}) {
       ...(options.headers || {}),
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Request failed");
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+  if (!res.ok) {
+    throw new ApiError(data?.detail || `Request failed (${res.status})`, res.status);
+  }
   return data;
 }

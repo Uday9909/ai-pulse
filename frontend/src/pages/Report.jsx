@@ -3,9 +3,10 @@ import { api } from "../api.js";
 
 export default function Report() {
   const [report, setReport] = useState(null);
+  const [error, setError] = useState("");
 
   function load() {
-    return api("/reports/me").then(setReport);
+    return api("/reports/me").then(setReport).catch((e) => setError(e.message));
   }
 
   useEffect(() => {
@@ -14,11 +15,15 @@ export default function Report() {
 
   async function remove() {
     if (!window.confirm("Delete all your answers for this organization?")) return;
-    await api("/reports/me", { method: "DELETE" });
-    await load();
+    try {
+      await api("/reports/me", { method: "DELETE" });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
   }
 
-  if (!report) return <p>Loading…</p>;
+  if (!report) return error ? <p className="error">{error}</p> : <p>Loading…</p>;
   return (
     <div className="card">
       <h2>{report.name}: {report.level}</h2>

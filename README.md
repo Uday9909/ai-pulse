@@ -24,7 +24,7 @@ codebase, implements the two Northwind HR requests, and adds "explain my score".
 - **Client request:** small groups are hidden and their flags suppressed; employees can
   delete their answers per organization.
 - **Own feature:** "explain my score" shows the stored per-answer reason.
-- **AI usage:** Claude Code for reading, running, and fixing; see [AI_USAGE.md](AI_USAGE.md).
+- **AI usage:** Claude Code for reading, running, and fixing; the mistake it made is below.
 
 ## What I found
 
@@ -172,7 +172,9 @@ fixes, and writing these docs. Tests were written first and run against the old 
 
 One place the AI was wrong: its first small-group test expected "Other teams" to hold 7
 employees. The run showed 10 — Sales was also below the threshold, and Ravi is in HR.
-The test caught the miscount before it was accepted. More in [AI_USAGE.md](AI_USAGE.md).
+The test caught the miscount before it was accepted. The same thing happened while
+applying frontend error states: part of an edit batch did not apply, and the partial
+result was only visible because both edits were checked before building.
 
 ## How to run and test
 

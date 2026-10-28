@@ -60,7 +60,7 @@ def add_responder(org_name, dept_name, email, score=3, flags=None):
         db.close()
 
 
-def add_response(email, org_name, score=3, flags=None):
+def add_response(email, org_name, score=3, flags=None, question_id="common-open"):
     """Add one answer to an existing membership."""
     db = SessionLocal()
     try:
@@ -69,7 +69,7 @@ def add_response(email, org_name, score=3, flags=None):
         membership = db.query(models.Membership).filter_by(user_id=user.id, org_id=org.id).one()
         db.add(models.Response(
             membership_id=membership.id,
-            question_id="common-open",
+            question_id=question_id,
             answer="synthetic",
             score=score,
             reason="synthetic",

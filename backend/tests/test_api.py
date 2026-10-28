@@ -19,9 +19,9 @@ def test_admin_dashboard(client):
     org_id = data["organizations"][0]["org_id"]
     r = client.get(f"/dashboard?org_id={org_id}", headers=headers)
     assert r.status_code == 200
-    # Every seeded department is below the small-group threshold, so only the
-    # non-attributable aggregate is shown.
-    assert [d["department"] for d in r.json()["departments"]] == ["Other teams"]
+    # Every seeded department is below the small-group threshold and the
+    # aggregate would carry only two responders, so nothing is shown.
+    assert r.json()["departments"] == []
 
 
 def test_admin_can_see_own_org(client):

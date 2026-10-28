@@ -31,7 +31,8 @@ def answer_for_index(index: int) -> str:
 
 @pytest.mark.parametrize("index", range(MOCK_COUNT))
 def test_malformed_mock_entries_do_not_break_submit(client, index):
-    headers, _ = login(client, "priya@northwind.test", "Northwind Logistics")
+    # Neha has no seeded answers; submitting common-open twice now returns 409.
+    headers, _ = login(client, "neha@northwind.test", "Northwind Logistics")
     answer = answer_for_index(index)
 
     r = client.post(

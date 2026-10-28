@@ -27,7 +27,7 @@ def org_dashboard(org_id: int, m: models.Membership = Depends(current_membership
     members = db.query(models.Membership).filter_by(org_id=org_id).all()
     departments = []
     all_flags = {}
-    other = {"employees": 0, "responded": 0, "scores": []}
+    other = {"employees": 0, "responded": 0, "scores": [], "departments": 0}
 
     for dept in org.departments:
         dept_members = [x for x in members if x.department_id == dept.id]
@@ -35,7 +35,14 @@ def org_dashboard(org_id: int, m: models.Membership = Depends(current_membership
         dept_flags = {}
         responded = 0
         for dm in dept_members:
-            rows = db.query(models.Response).filter_by(membership_id=dm.id).all()
+            rows = (
+                db.query(models.Response)
+                .filter_by(membership_id=dm.id)
+                .order_by(models.Response.id)
+                .all()
+            )
+            # Legacy duplicates: keep only the latest answer per question.
+            rows = list({r.question_id: r for r in rows}.values())
             if rows:
                 responded += 1
             for r in rows:
@@ -48,6 +55,7 @@ def org_dashboard(org_id: int, m: models.Membership = Depends(current_membership
             other["employees"] += len(dept_members)
             other["responded"] += responded
             other["scores"].extend(scores)
+            other["departments"] += 1
             continue
 
         avg = sum(scores) / len(scores) if scores else None
@@ -61,7 +69,9 @@ def org_dashboard(org_id: int, m: models.Membership = Depends(current_membership
         for flag, count in dept_flags.items():
             all_flags[flag] = all_flags.get(flag, 0) + count
 
-    if other["responded"]:
+    # The aggregate is only anonymous when at least two departments feed it and
+    # at least five people responded. One department would still be identifiable.
+    if other["responded"] >= SMALL_GROUP_MIN_RESPONDENTS and other["departments"] >= 2:
         avg = sum(other["scores"]) / len(other["scores"]) if other["scores"] else None
         departments.append({
             "department": "Other teams",

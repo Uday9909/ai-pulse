@@ -37,6 +37,20 @@ def test_admin_cannot_see_other_org(client):
     assert r.status_code == 403
 
 
+def test_select_org_rejects_non_member(client):
+    headers, _ = login(client, "priya@northwind.test")
+    r = client.post("/auth/select-org", json={"org_id": 2}, headers=headers)
+    assert r.status_code == 403
+
+
+def test_select_org_allows_multi_org_member(client):
+    headers, data = login(client, "ravi@consult.test")
+    bluepeak = next(o for o in data["organizations"] if o["org_name"] == "Bluepeak Retail")
+    r = client.post("/auth/select-org", json={"org_id": bluepeak["org_id"]}, headers=headers)
+    assert r.status_code == 200
+    assert r.json()["org_id"] == bluepeak["org_id"]
+
+
 def test_multi_org_admin_token_is_scoped_to_selected_org(client):
     # Ravi is an employee at Northwind and an admin at Bluepeak.
     headers, _ = login(client, "ravi@consult.test", "Bluepeak Retail")

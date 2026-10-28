@@ -15,11 +15,12 @@ codebase, implements the two Northwind HR requests, and adds "explain my score".
   as a string (`questions.py:18`).
 - **Fixed:** tenant scoping, membership-checked tokens, output validation, averages,
   one maturity scale, seniority ranking, JWT claim requirements, input size caps, an
-  anonymity-safe small-group rule, per-org delete, and frontend error states. Tests went
-  from 1 failed / 7 passed to 53 passed.
-- **Deliberately left:** SHA-256 password hashing, wildcard CORS (bearer tokens only),
-  no live-model rate limiting, JSON dashboard UI, per-org delete scope, cross-role
-  question submission.
+  anonymity-safe small-group rule, per-org delete, salted PBKDF2 passwords with a legacy
+  upgrade, a 32-byte secret requirement, a CORS allow-list, role-scoped submissions,
+  model input separation with email/phone redaction, a dashboard table, and frontend error
+  states. Tests went from 1 failed / 7 passed to 60 passed.
+- **Deliberately left:** no live-model rate limiting, no token-level prompt-injection
+  classifier (separation and redaction only), per-org delete scope, no docker-compose.
 - **Client request:** small groups are hidden and their flags suppressed; employees can
   delete their answers per organization.
 - **Own feature:** "explain my score" shows the stored per-answer reason.
@@ -87,11 +88,12 @@ Full table with exact reproduction commands: [AUDIT.md](AUDIT.md).
 | Seniority rank map | be1195c | `test_lead_manager_gets_policy_questions`, `test_lead_engineer_gets_senior_questions` |
 | Stop committing `.env`, warn on unset secret | 35dcc19 | suite runs with no committed secret |
 | Container entrypoint, CI | a92b238 | `.github/workflows/test.yml` |
+| Salted PBKDF2 passwords, legacy upgrade, 32-byte secret, CORS allow-list, role-scoped submits, model input separation/redaction, dashboard table | 2d72285 | `test_password_hash_is_salted_and_verifies`, `test_legacy_sha256_login_is_upgraded`, `test_short_secret_key_is_rejected`, `test_cannot_submit_a_question_for_another_role`, `test_prepare_answer_strips_forged_tags`, `test_prepare_answer_redacts_email_and_phone`, `test_instructions_stay_in_the_user_message` |
 
 `test_admin_cannot_see_other_org` was rewritten to call `?org_id=2` and assert 403; the
 commit message says so. It failed on the old code (200) before the fix.
 
-Baseline: `1 failed, 7 passed`. Now: `53 passed`.
+Baseline: `1 failed, 7 passed`. Now: `60 passed`.
 
 Three tests were rewritten because the small-group rule changed expected department
 lists: `test_admin_dashboard` (now expects no rows on seeded data),
@@ -102,23 +104,17 @@ assertions are stricter, not weaker. Inspect with
 
 ## What I deliberately left, and why
 
-- Unsalted SHA-256 password hashing (`backend/app/auth.py:13`). Unchanged. bcrypt/argon2
-  is a 30-minute fix and a client-blocker for production; left to keep the diff scoped
-  and the seeded `pulse123` logins working.
-- `allow_origins=["*"]` (`backend/app/main.py:12`). CORS is `*`; acceptable for
-  bearer-token auth in localStorage (the caller already holds the token), not for cookie
-  auth. There are no cookies or session middleware. Would tighten if cookies were added.
 - No rate limiting on the live model path. That needs an infrastructure decision, not a
   small diff.
-- `frontend/src/pages/Dashboard.jsx:15` still renders JSON. A real dashboard is a UI
-  redesign, which this task forbids.
+- No token-level prompt-injection classifier. The live call separates rules into a system
+  message, wraps and strips the answer tags, and redacts emails/phones, but a hostile
+  answer can still try to steer the score. The live path is not exercised in the demo.
+- Per-organization delete. "All their answers" for a multi-org user is ambiguous; the
+  client questions below name it.
 - No docker-compose. Dockerfile entrypoint fixed (`app.main:app`); the image was not
   built or run here because Docker is not installed. **NOT RUN.**
-- `POST /diagnostic/submit` still accepts any question id and duplicate submissions
-  (`backend/app/routes/diagnostic.py:37`). The product rules are unclear (can a user
-  retake a question?), so this is deferred with a reason in `AUDIT.md`.
-- The frontend has no error UI for failed requests. The 500s that reached the browser
-  are fixed; the demo path no longer hits it.
+- Retakes: a second submission is 409 rather than replacing the previous one. That keeps
+  the five-responder count honest, but it is a product decision worth confirming.
 
 ## Client request
 
@@ -232,6 +228,30 @@ Demo accounts (password `pulse123`):
 | priya@northwind.test | Northwind Logistics | Employee (Support) |
 | dev@northwind.test | Northwind Logistics | Employee (Engineering, lead) |
 
+## Change guide
+
+- **Add a question:** `backend/data/questions.json` — `roles`, `min_seniority`, `type`; the
+  tests live in `backend/tests/test_questions.py`.
+- **Privacy rule:** `SMALL_GROUP_MIN_RESPONDENTS` and the `Other teams` gate in
+  `backend/app/routes/dashboard.py`.
+- **Scoring rules:** `backend/app/services/scoring.py` (parse, clamp, allow-list) and
+  `backend/app/services/llm.py` (prompt, tag handling, redaction).
+- **Auth:** `backend/app/auth.py` (PBKDF2, JWT) and `backend/app/routes/auth_routes.py`
+  (login, organization selection).
+- **Run one test:**
+  `cd backend && .venv/bin/python -m pytest tests/test_api.py -q -k other_org`.
+- **Schema:** this branch adds no tables or columns, so `create_all` is enough;
+  `python -m app.seed` rebuilds the demo data.
+
+## Evidence
+
+- CI runs `pytest`, `npm test`, and `npm run build` on every push:
+  see the Actions tab of the repository.
+- Local final state: backend `60 passed`, frontend `3 passed`, production build succeeds.
+- Fresh clone: follow the run instructions below in a temp directory; tests and the
+  server start from a clean checkout (no committed `.env`).
+- Deliberate gaps are listed above and in [AUDIT.md](AUDIT.md).
+
 ## Averages
 
 I average over scored answers. Mean-of-per-person-means would weight each employee
@@ -243,17 +263,16 @@ seeded Support data both methods agree (2.5). Tradeoff noted.
 
 The demo runs in `AI_MODE=mock`: scores come from `backend/data/mock_ai_responses.json`
 selected by `md5(answer) % 10`. There is no live model call in the seeded flows. The live
-path has output validation (clamp 1–5, flag allow-list, parse-failure fallback) but no
-input-side prompt-injection defense and no PII redaction; both are deliberate cuts.
+path has output validation (fences, clamp 1–5, flag allow-list, parse-failure fallback)
+and input separation (system rules, tagged answer, email/phone redaction). It does not
+have a token-level injection classifier, and the live call is not exercised in the demo.
 
 ## Known weak spots
 
-- The AI guard validates output; it is not injection-proof. A hostile model can still
-  produce a plausible reason string that is stored and displayed.
+- The AI guard validates output and separates input, but it is not a full injection
+  classifier. A hostile model can still produce a plausible reason string that is stored.
 - Delete is per-organization by design; "all their answers" for a multi-org user is
   unresolved pending the client answer.
-- Password hashing is unchanged (unsalted SHA-256).
-- The admin dashboard is still a JSON dump in the UI.
 - No rate limiting on the live model path.
 - The leaked JWT key remains in git history; rotate it.
 - There is no automated test for the Docker image (Docker unavailable here).

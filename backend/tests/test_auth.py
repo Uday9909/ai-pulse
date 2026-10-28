@@ -1,5 +1,7 @@
+import os
 import pathlib
 import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -12,6 +14,23 @@ FUTURE = datetime.now(timezone.utc) + timedelta(hours=1)
 
 def auth(token):
     return {"Authorization": f"Bearer {token}"}
+
+
+def test_config_refuses_to_start_without_secret_key():
+    backend = pathlib.Path(__file__).resolve().parents[1]
+    env = os.environ.copy()
+    env["SECRET_KEY"] = ""
+
+    result = subprocess.run(
+        [sys.executable, "-c", "import app.config"],
+        cwd=backend,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "SECRET_KEY is not set" in result.stderr
 
 
 def test_token_without_exp_is_rejected(client):

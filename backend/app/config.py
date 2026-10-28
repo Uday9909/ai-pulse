@@ -11,14 +11,9 @@ if os.path.exists(_env_path):
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    import warnings
-
-    SECRET_KEY = "ai-pulse-dev-secret"
-    warnings.warn(
-        "SECRET_KEY is not set; using an insecure development default. "
-        "Set SECRET_KEY in backend/.env before deploying.",
-        RuntimeWarning,
-        stacklevel=2,
+    raise RuntimeError(
+        "SECRET_KEY is not set. Copy backend/.env.example to backend/.env and "
+        "set a unique value, e.g. python -c \"import secrets; print(secrets.token_hex(32))\""
     )
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./aipulse.db")
 AI_MODE = os.getenv("AI_MODE", "mock")  # "mock" or "live"

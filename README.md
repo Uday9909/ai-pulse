@@ -21,6 +21,14 @@ Tenant isolation and auth:
 - `backend/tests/test_api.py:25` (`test_admin_cannot_see_other_org`) called `?org_id=1`
   — Asha's own org — and asserted 200. The leak was green.
 
+**SECRET_KEY.** A production-looking `SECRET_KEY` was committed in `backend/.env` at
+`930dd6e`. It is in git history and, if the repo is public, effectively public. Anyone
+can forge a JWT for any user. I untracked it, added it to `.gitignore`, and require it to
+be set from `.env`; the app refuses to start with no value. **I did not rewrite history.**
+The key must be revoked by whoever owns the deployment. I generated a fresh local key for
+my environment. `test_auth.py::test_old_committed_secret_is_not_trusted` proves the old
+value is rejected.
+
 Numbers and questions:
 
 - `backend/app/routes/dashboard.py:48` divided by department members instead of scored
@@ -150,7 +158,8 @@ cd backend
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env       # optional locally; set SECRET_KEY for anything shared
+cp .env.example .env
+python -c "import secrets; print(secrets.token_hex(32))"   # paste into SECRET_KEY in .env
 python -m app.seed
 uvicorn app.main:app --reload
 ```

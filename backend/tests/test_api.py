@@ -63,6 +63,26 @@ def test_department_without_responses_is_not_scored(client):
     assert engineering["level"] == "Not assessed"
 
 
+def test_report_and_dashboard_use_the_same_maturity_scale(client):
+    headers, _ = login(client, "imran@northwind.test", "Northwind Logistics")
+    answers = [
+        {"question_id": "common-freq", "answer": "A few times a month"},  # 2
+        {"question_id": "common-policy", "answer": "I think so, but I haven't read it"},  # 2
+        {"question_id": "common-data", "answer": "Rarely"},  # 2
+        {"question_id": "common-review", "answer": "Use it as is"},  # 1
+        {"question_id": "mgr-adoption", "answer": "A few people, informally"},  # 2
+    ]
+    assert client.post("/diagnostic/submit", json={"answers": answers}, headers=headers).status_code == 200
+
+    report = client.get("/reports/me", headers=headers).json()
+    assert report["average_score"] == 1.8
+
+    admin_headers, _ = login(client, "asha@northwind.test", "Northwind Logistics")
+    hr = departments_by_name(client, admin_headers)["HR"]
+    assert hr["average_score"] == 1.8
+    assert hr["level"] == report["level"]
+
+
 def test_select_org_rejects_non_member(client):
     headers, _ = login(client, "priya@northwind.test")
     r = client.post("/auth/select-org", json={"org_id": 2}, headers=headers)

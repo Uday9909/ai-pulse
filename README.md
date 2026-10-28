@@ -14,10 +14,10 @@ Tenant isolation and auth:
   token read Northwind.
 - `backend/app/routes/auth_routes.py:33` minted a token for any `org_id` the caller
   asked for, with no Membership check.
-- `backend/.env:1` was tracked with `SECRET_KEY=pulse-7f3a9c2e1b-prod`. I minted a
+- `backend/.env:1` was tracked with a production-looking JWT `SECRET_KEY`. I minted a
   token for user 1 with it and read `/dashboard` and `/reports/me` as Asha. The key is
-  still in git history; **rotate it**. Rotation is out of scope for this submission;
-  it is no longer tracked and the local copy was regenerated.
+  still in git history (`930dd6e`); **rotate it**. Rotation is out of scope for this
+  submission; it is no longer tracked and the local copy was regenerated.
 - `backend/tests/test_api.py:25` (`test_admin_cannot_see_other_org`) called `?org_id=1`
   — Asha's own org — and asserted 200. The leak was green.
 

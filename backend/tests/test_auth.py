@@ -1,3 +1,4 @@
+import hashlib
 import os
 import pathlib
 import subprocess
@@ -7,13 +8,67 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import pytest
 
+from app.auth import hash_password, password_needs_rehash, verify_password
 from app.config import SECRET_KEY
+from app.db import SessionLocal
+from app import models
 
 FUTURE = datetime.now(timezone.utc) + timedelta(hours=1)
 
 
 def auth(token):
     return {"Authorization": f"Bearer {token}"}
+
+
+def test_password_hash_is_salted_and_verifies():
+    first = hash_password("pulse123")
+    second = hash_password("pulse123")
+
+    assert first != second
+    assert first.startswith("pbkdf2_sha256$")
+    assert verify_password("pulse123", first)
+    assert not verify_password("wrong", first)
+
+
+def test_legacy_sha256_login_is_upgraded(client):
+    db = SessionLocal()
+    try:
+        user = db.query(models.User).filter_by(email="priya@northwind.test").one()
+        user.password_hash = hashlib.sha256(b"pulse123").hexdigest()
+        db.commit()
+    finally:
+        db.close()
+
+    r = client.post(
+        "/auth/login",
+        json={"email": "priya@northwind.test", "password": "pulse123"},
+    )
+    assert r.status_code == 200
+
+    db = SessionLocal()
+    try:
+        user = db.query(models.User).filter_by(email="priya@northwind.test").one()
+        assert user.password_hash.startswith("pbkdf2_sha256$")
+        assert not password_needs_rehash(user.password_hash)
+    finally:
+        db.close()
+
+
+def test_short_secret_key_is_rejected():
+    backend = pathlib.Path(__file__).resolve().parents[1]
+    env = os.environ.copy()
+    env["SECRET_KEY"] = "too-short"
+
+    result = subprocess.run(
+        [sys.executable, "-c", "import app.config"],
+        cwd=backend,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "at least 32 bytes" in result.stderr
 
 
 def test_config_refuses_to_start_without_secret_key():

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from .. import models
 from ..auth import current_membership
-from ..services.questions import questions_for, load_questions
+from ..services.questions import questions_for
 from ..services.scoring import score_open_answer
 
 router = APIRouter(prefix="/diagnostic", tags=["diagnostic"])
@@ -34,7 +34,8 @@ def get_questions(m: models.Membership = Depends(current_membership)):
 
 @router.post("/submit")
 def submit(body: SubmitIn, m: models.Membership = Depends(current_membership), db: Session = Depends(get_db)):
-    bank = {q["id"]: q for q in load_questions()}
+    # Only questions assigned to this role and seniority may be answered.
+    bank = {q["id"]: q for q in questions_for(m.job_role, m.seniority)}
     answered = {
         qid
         for (qid,) in db.query(models.Response.question_id).filter_by(membership_id=m.id)
@@ -43,7 +44,7 @@ def submit(body: SubmitIn, m: models.Membership = Depends(current_membership), d
     for a in body.answers:
         q = bank.get(a.question_id)
         if not q:
-            raise HTTPException(400, f"Unknown question {a.question_id}")
+            raise HTTPException(400, f"Question is not assigned to you: {a.question_id}")
         if a.question_id in seen or a.question_id in answered:
             raise HTTPException(409, f"Question already answered: {a.question_id}")
         seen.add(a.question_id)

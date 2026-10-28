@@ -2,12 +2,7 @@ import json
 
 from . import llm
 
-ALLOWED_FLAGS = {
-    "customer_data_shared",
-    "confidential_data_shared",
-    "unreviewed_output",
-    "policy_unaware",
-}
+ALLOWED_FLAGS = set(llm.ALLOWED_FLAGS)
 
 SCORING_FAILED = {"score": None, "reason": None, "flags": ["scoring_failed"]}
 

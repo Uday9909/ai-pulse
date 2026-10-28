@@ -125,6 +125,18 @@ def test_submit_rejects_an_oversized_answer(client):
     assert r.status_code == 422
 
 
+def test_cannot_submit_a_question_for_another_role(client):
+    headers, _ = login(client, "priya@northwind.test", "Northwind Logistics")
+
+    r = client.post(
+        "/diagnostic/submit",
+        json={"answers": [{"question_id": "mgr-open", "answer": "Anything"}]},
+        headers=headers,
+    )
+
+    assert r.status_code == 400
+
+
 def test_select_org_rejects_non_member(client):
     headers, _ = login(client, "priya@northwind.test")
     r = client.post("/auth/select-org", json={"org_id": 2}, headers=headers)

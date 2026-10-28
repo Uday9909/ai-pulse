@@ -1,21 +1,49 @@
 import hashlib
+import hmac
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
-from .config import SECRET_KEY, TOKEN_HOURS
+from .config import PASSWORD_ROUNDS, SECRET_KEY, TOKEN_HOURS
 from .db import get_db
 from . import models
 
+PBKDF2_PREFIX = "pbkdf2_sha256"
+
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Salted PBKDF2-HMAC-SHA256. The demo password stays the same; only the stored form changes."""
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PASSWORD_ROUNDS)
+    return f"{PBKDF2_PREFIX}${PASSWORD_ROUNDS}${salt.hex()}${digest.hex()}"
+
+
+def _verify_pbkdf2(password: str, stored: str) -> bool:
+    algorithm, rounds, salt_hex, digest_hex = stored.split("$")
+    if algorithm != PBKDF2_PREFIX:
+        return False
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), int(rounds)
+    )
+    return hmac.compare_digest(digest.hex(), digest_hex)
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    return hash_password(password) == hashed
+    try:
+        if hashed.startswith(f"{PBKDF2_PREFIX}$"):
+            return _verify_pbkdf2(password, hashed)
+        # Legacy rows: unsalted SHA-256. Still accepted, then upgraded on login.
+        legacy = hashlib.sha256(password.encode("utf-8")).hexdigest()
+        return hmac.compare_digest(legacy, hashed)
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def password_needs_rehash(hashed: str) -> bool:
+    return not hashed.startswith(f"{PBKDF2_PREFIX}$")
 
 
 def make_token(user_id: int, org_id: int | None = None) -> str:

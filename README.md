@@ -5,6 +5,26 @@ AI Pulse helps a company understand how well its people use AI at work, team by 
 This branch (`safety-hardening`) fixes the highest-impact defects in the handed-over
 codebase, implements the two Northwind HR requests, and adds "explain my score".
 
+## In three minutes
+
+- **Found:** dashboard trusted `?org_id` (`routes/dashboard.py:24`) and any admin could
+  read another tenant; `select-org` minted tokens without a membership
+  (`auth_routes.py:33`); a production-looking JWT key was committed (`backend/.env`);
+  model output was unvalidated (`services/scoring.py:8-9`); department averages divided
+  by headcount (`dashboard.py:48`); two maturity scales disagreed; seniority was compared
+  as a string (`questions.py:18`).
+- **Fixed:** tenant scoping, membership-checked tokens, output validation, averages,
+  one maturity scale, seniority ranking, JWT claim requirements, input size caps, an
+  anonymity-safe small-group rule, per-org delete, and frontend error states. Tests went
+  from 1 failed / 7 passed to 53 passed.
+- **Deliberately left:** SHA-256 password hashing, wildcard CORS (bearer tokens only),
+  no live-model rate limiting, JSON dashboard UI, per-org delete scope, cross-role
+  question submission.
+- **Client request:** small groups are hidden and their flags suppressed; employees can
+  delete their answers per organization.
+- **Own feature:** "explain my score" shows the stored per-answer reason.
+- **AI usage:** Claude Code for reading, running, and fixing; see [AI_USAGE.md](AI_USAGE.md).
+
 ## What I found
 
 Tenant isolation and auth:
@@ -71,20 +91,29 @@ Full table with exact reproduction commands: [AUDIT.md](AUDIT.md).
 `test_admin_cannot_see_other_org` was rewritten to call `?org_id=2` and assert 403; the
 commit message says so. It failed on the old code (200) before the fix.
 
-Baseline: `1 failed, 7 passed`. Now: `37 passed`.
+Baseline: `1 failed, 7 passed`. Now: `53 passed`.
+
+Three tests were rewritten because the small-group rule changed expected department
+lists: `test_admin_dashboard` (now expects no rows on seeded data),
+`test_admin_cannot_see_other_org` (now calls `?org_id=2` and asserts 403), and the seeded
+small-group test (renamed to `test_seeded_dashboard_hides_all_small_groups`). The
+assertions are stricter, not weaker. Inspect with
+`git show 9765d86 -- backend/tests/` and `git show d2597fc -- backend/tests/`.
 
 ## What I deliberately left, and why
 
-- Unsalted SHA-256 password hashing (`backend/app/auth.py:13`). Changing it invalidates
-  the seeded passwords, and the demo accounts must keep `pulse123`.
-- `allow_origins=["*"]` (`backend/app/main.py:12`). Needed for the Vite dev origin
-  today; should be pinned per environment.
+- Unsalted SHA-256 password hashing (`backend/app/auth.py:13`). Unchanged. bcrypt/argon2
+  is a 30-minute fix and a client-blocker for production; left to keep the diff scoped
+  and the seeded `pulse123` logins working.
+- `allow_origins=["*"]` (`backend/app/main.py:12`). CORS is `*`; acceptable for
+  bearer-token auth in localStorage (the caller already holds the token), not for cookie
+  auth. There are no cookies or session middleware. Would tighten if cookies were added.
 - No rate limiting on the live model path. That needs an infrastructure decision, not a
   small diff.
 - `frontend/src/pages/Dashboard.jsx:15` still renders JSON. A real dashboard is a UI
   redesign, which this task forbids.
-- No docker-compose. The Dockerfile entrypoint is fixed, but the image was not built
-  here because Docker is not available in this environment. **NOT RUN.**
+- No docker-compose. Dockerfile entrypoint fixed (`app.main:app`); the image was not
+  built or run here because Docker is not installed. **NOT RUN.**
 - `POST /diagnostic/submit` still accepts any question id and duplicate submissions
   (`backend/app/routes/diagnostic.py:37`). The product rules are unclear (can a user
   retake a question?), so this is deferred with a reason in `AUDIT.md`.
@@ -202,6 +231,20 @@ Demo accounts (password `pulse123`):
 | ravi@consult.test | Both | Employee at Northwind, admin at Bluepeak |
 | priya@northwind.test | Northwind Logistics | Employee (Support) |
 | dev@northwind.test | Northwind Logistics | Employee (Engineering, lead) |
+
+## Averages
+
+I average over scored answers. Mean-of-per-person-means would weight each employee
+equally; scored-answers weights employees who answered more questions more. I chose
+scored-answers because the dashboard is a department-level view of answers. On the
+seeded Support data both methods agree (2.5). Tradeoff noted.
+
+## AI mode
+
+The demo runs in `AI_MODE=mock`: scores come from `backend/data/mock_ai_responses.json`
+selected by `md5(answer) % 10`. There is no live model call in the seeded flows. The live
+path has output validation (clamp 1–5, flag allow-list, parse-failure fallback) but no
+input-side prompt-injection defense and no PII redaction; both are deliberate cuts.
 
 ## Known weak spots
 

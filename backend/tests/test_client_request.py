@@ -113,6 +113,17 @@ def test_large_department_flags_still_appear(client):
     assert risks["customer_data_shared"] == 4
 
 
+def test_demo_script_adds_a_visible_department(client):
+    from app.scripts.demo_large_org import run
+
+    assert run() == 5
+    assert run() == 0  # idempotent
+
+    data = dashboard_for(client, "asha@northwind.test", "Northwind Logistics")
+    sales = next(d for d in data["departments"] if d["department"] == "Sales")
+    assert sales["responded"] == 6  # Vikram plus five demo responders
+
+
 def test_resubmitting_answered_question_is_rejected(client):
     headers, _ = login(client, "priya@northwind.test", "Northwind Logistics")
 

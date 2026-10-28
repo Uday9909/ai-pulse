@@ -171,6 +171,19 @@ source .venv/bin/activate
 python -m pytest -q
 ```
 
+### How to see a visible department
+
+All seeded departments are below the client's five-responder threshold, so the seeded
+dashboard is **empty by design**. To populate one, run:
+
+```bash
+python -m app.scripts.demo_large_org   # from backend, venv active
+```
+
+It adds five responders to Northwind Sales (idempotent, does not modify `app/seed.py`).
+Then log in as `asha@northwind.test` → Northwind: Sales appears with six responders.
+The script prints the demo logins it creates.
+
 Demo accounts (password `pulse123`):
 
 | Email | Organization(s) | Role |

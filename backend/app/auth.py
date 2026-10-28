@@ -31,7 +31,12 @@ def _decode(authorization: str | None):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Missing token")
     try:
-        return jwt.decode(authorization[7:], SECRET_KEY, algorithms=["HS256"])
+        return jwt.decode(
+            authorization[7:],
+            SECRET_KEY,
+            algorithms=["HS256"],
+            options={"require": ["exp", "sub"]},
+        )
     except jwt.PyJWTError:
         raise HTTPException(401, "Invalid token")
 

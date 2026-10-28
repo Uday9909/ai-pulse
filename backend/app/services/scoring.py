@@ -47,6 +47,8 @@ def score_open_answer(question_text: str, answer: str) -> dict:
 
     reason = data.get("reason")
     raw_flags = data.get("flags")
+    if isinstance(raw_flags, str):
+        raw_flags = [raw_flags]
     return {
         "score": _coerce_score(data.get("score")),
         "reason": reason if isinstance(reason, str) else None,

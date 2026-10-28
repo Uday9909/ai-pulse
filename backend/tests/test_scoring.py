@@ -77,6 +77,33 @@ def test_out_of_range_and_non_numeric_scores_become_none(monkeypatch):
     assert scoring.score_open_answer("q", "a")["score"] is None
 
 
+def test_flags_as_a_string_are_normalized(monkeypatch):
+    monkeypatch.setattr(
+        scoring.llm,
+        "score_answer",
+        lambda q, a: '{"score": 3, "reason": "x", "flags": "unreviewed_output"}',
+    )
+    assert scoring.score_open_answer("q", "a")["flags"] == ["unreviewed_output"]
+
+
+def test_reason_as_a_dict_becomes_none(monkeypatch):
+    monkeypatch.setattr(
+        scoring.llm,
+        "score_answer",
+        lambda q, a: '{"score": 3, "reason": {"text": "x"}, "flags": []}',
+    )
+    assert scoring.score_open_answer("q", "a")["reason"] is None
+
+
+def test_top_level_list_returns_scoring_failed(monkeypatch):
+    monkeypatch.setattr(scoring.llm, "score_answer", lambda q, a: '[{"score": 3}]')
+    assert scoring.score_open_answer("q", "a") == {
+        "score": None,
+        "reason": None,
+        "flags": ["scoring_failed"],
+    }
+
+
 def test_unknown_flags_are_dropped(monkeypatch):
     monkeypatch.setattr(
         scoring.llm,

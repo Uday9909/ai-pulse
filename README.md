@@ -98,7 +98,7 @@ Tenant isolation and auth:
   Membership lookup.
 - `backend/.env:1` was tracked with a production-looking JWT `SECRET_KEY`. I minted a
   token with it and read `/dashboard` and `/reports/me` as Asha. The key is still in git
-  history (`930dd6e`); **rotate it**. It is no longer tracked and the local copy was
+  history (`54a6096`); **rotate it**. It is no longer tracked and the local copy was
   regenerated.
 - `backend/tests/test_api.py:25` (`test_admin_cannot_see_other_org`) called `?org_id=1`,
   Asha's own org, and asserted 200. The leak was green.

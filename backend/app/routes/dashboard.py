@@ -47,7 +47,7 @@ def org_dashboard(org_id: int, m: models.Membership = Depends(current_membership
                     scores.append(r.score)
                 for f in r.flags or []:
                     all_flags[f] = all_flags.get(f, 0) + 1
-        avg = sum(scores) / len(dept_members) if dept_members else None
+        avg = sum(scores) / len(scores) if scores else None
         departments.append({
             "department": dept.name,
             "employees": len(dept_members),

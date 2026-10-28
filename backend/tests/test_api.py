@@ -37,6 +37,32 @@ def test_admin_cannot_see_other_org(client):
     assert r.status_code == 403
 
 
+def departments_by_name(client, headers):
+    response = client.get("/dashboard?org_id=1", headers=headers).json()
+    return {d["department"]: d for d in response["departments"]}
+
+
+def test_department_average_divides_by_scored_responses(client):
+    headers, _ = login(client, "asha@northwind.test", "Northwind Logistics")
+    departments = departments_by_name(client, headers)
+
+    # Priya answered two questions (2 and 3) out of three Support members.
+    assert departments["Support"]["responded"] == 1
+    assert departments["Support"]["average_score"] == 2.5
+
+    # Vikram answered two questions (4 and 4) out of three Sales members.
+    assert departments["Sales"]["average_score"] == 4.0
+
+
+def test_department_without_responses_is_not_scored(client):
+    headers, _ = login(client, "asha@northwind.test", "Northwind Logistics")
+    engineering = departments_by_name(client, headers)["Engineering"]
+
+    assert engineering["responded"] == 0
+    assert engineering["average_score"] is None
+    assert engineering["level"] == "Not assessed"
+
+
 def test_select_org_rejects_non_member(client):
     headers, _ = login(client, "priya@northwind.test")
     r = client.post("/auth/select-org", json={"org_id": 2}, headers=headers)

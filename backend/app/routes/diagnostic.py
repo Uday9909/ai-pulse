@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -13,11 +13,11 @@ router = APIRouter(prefix="/diagnostic", tags=["diagnostic"])
 
 class AnswerIn(BaseModel):
     question_id: str
-    answer: str
+    answer: str = Field(max_length=5000)
 
 
 class SubmitIn(BaseModel):
-    answers: list[AnswerIn]
+    answers: list[AnswerIn] = Field(max_length=20)
 
 
 @router.get("/questions")

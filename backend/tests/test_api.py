@@ -107,6 +107,24 @@ def test_report_includes_stored_reason_per_answer(client):
     assert by_question["common-open"]["reason"] == "Useful summary but shared customer data."
 
 
+def test_submit_rejects_more_than_twenty_answers(client):
+    headers, _ = login(client, "neha@northwind.test", "Northwind Logistics")
+    answers = [{"question_id": "common-freq", "answer": "Daily"} for _ in range(21)]
+
+    r = client.post("/diagnostic/submit", json={"answers": answers}, headers=headers)
+
+    assert r.status_code == 422
+
+
+def test_submit_rejects_an_oversized_answer(client):
+    headers, _ = login(client, "neha@northwind.test", "Northwind Logistics")
+    answers = [{"question_id": "common-open", "answer": "x" * 5001}]
+
+    r = client.post("/diagnostic/submit", json={"answers": answers}, headers=headers)
+
+    assert r.status_code == 422
+
+
 def test_select_org_rejects_non_member(client):
     headers, _ = login(client, "priya@northwind.test")
     r = client.post("/auth/select-org", json={"org_id": 2}, headers=headers)

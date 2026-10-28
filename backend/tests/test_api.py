@@ -1,4 +1,4 @@
-from tests.conftest import login
+from tests.conftest import login, add_responder
 
 
 def test_login_lists_organizations(client):
@@ -19,7 +19,9 @@ def test_admin_dashboard(client):
     org_id = data["organizations"][0]["org_id"]
     r = client.get(f"/dashboard?org_id={org_id}", headers=headers)
     assert r.status_code == 200
-    assert len(r.json()["departments"]) == 4
+    # Every seeded department is below the small-group threshold, so only the
+    # non-attributable aggregate is shown.
+    assert [d["department"] for d in r.json()["departments"]] == ["Other teams"]
 
 
 def test_admin_can_see_own_org(client):
@@ -43,22 +45,28 @@ def departments_by_name(client, headers):
 
 
 def test_department_average_divides_by_scored_responses(client):
+    # Four synthetic responders make Sales visible (Vikram + 4 = 5 responded).
+    for i in range(4):
+        add_responder("Northwind Logistics", "Sales", f"sales{i}@northwind.test", score=3)
+
     headers, _ = login(client, "asha@northwind.test", "Northwind Logistics")
-    departments = departments_by_name(client, headers)
+    sales = departments_by_name(client, headers)["Sales"]
 
-    # Priya answered two questions (2 and 3) out of three Support members.
-    assert departments["Support"]["responded"] == 1
-    assert departments["Support"]["average_score"] == 2.5
-
-    # Vikram answered two questions (4 and 4) out of three Sales members.
-    assert departments["Sales"]["average_score"] == 4.0
+    # Vikram scored 4 + 4; the four added responders scored 3 each.
+    # 20 points over 6 scored answers, not over 7 department members.
+    assert sales["responded"] == 5
+    assert sales["average_score"] == 3.33
 
 
-def test_department_without_responses_is_not_scored(client):
+def test_department_with_only_unscored_responses_is_not_assessed(client):
+    # Five completed diagnostics whose scores all failed to parse.
+    for i in range(5):
+        add_responder("Northwind Logistics", "Engineering", f"eng{i}@northwind.test", score=None)
+
     headers, _ = login(client, "asha@northwind.test", "Northwind Logistics")
     engineering = departments_by_name(client, headers)["Engineering"]
 
-    assert engineering["responded"] == 0
+    assert engineering["responded"] == 5
     assert engineering["average_score"] is None
     assert engineering["level"] == "Not assessed"
 
@@ -74,8 +82,14 @@ def test_report_and_dashboard_use_the_same_maturity_scale(client):
     ]
     assert client.post("/diagnostic/submit", json={"answers": answers}, headers=headers).status_code == 200
 
+    # Four synthetic responders bring HR to five responded and keep the
+    # department average at 1.8: (9 + 4 * 1.8) / 9 scored answers.
+    for i in range(4):
+        add_responder("Northwind Logistics", "HR", f"hr{i}@northwind.test", score=1.8)
+
     report = client.get("/reports/me", headers=headers).json()
     assert report["average_score"] == 1.8
+    assert report["level"] == "Beginner"
 
     admin_headers, _ = login(client, "asha@northwind.test", "Northwind Logistics")
     hr = departments_by_name(client, admin_headers)["HR"]
